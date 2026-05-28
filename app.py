@@ -113,8 +113,8 @@ if not st.session_state.authenticated:
 
         
         # Text fields for explicit input
-        username_input = st.text_input("Username")
-        password_input = st.text_input("Password", type="password")
+    username_input = st.text_input("Username")
+    password_input = st.text_input("Password", type="password")
         
         
         if st.button("Login", use_container_width=True):
