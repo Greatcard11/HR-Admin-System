@@ -97,11 +97,8 @@ st.markdown('<div class="main-title">HR/ADMIN MANAGEMENT SYSTEM</div>', unsafe_a
 st.markdown('<div class="sub-title">Smart HR Operations & Employee Analytics Platform</div>', unsafe_allow_html=True)
 
 # =========================================
-# SECURE LOGIN SYSTEM
+# SECURE LOGIN SYSTEM (USERNAME & PASSWORD)
 # =========================================
-# Accessing hidden credentials securely from secrets
-VALID_ROLES = ["Managing Director", "HR/Admin", "CISO", "General User"]
-
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
     st.session_state.user_role = None
@@ -111,20 +108,50 @@ if not st.session_state.authenticated:
     
     with login_col2:
         st.subheader("🔑 System Login")
-        role_input = st.selectbox("Select Your Role", VALID_ROLES)
-        password_input = st.password_input("Enter Password", type="password")
+        
+        # Text fields for explicit input
+        username_input = st.text_input("Username")
+        password_input = st.password_input("Password", type="password")
         
         if st.button("Login", use_container_width=True):
-            # Formulate the secret key based on selection to match secrets.toml format
-            secret_key = role_input.lower().replace(" ", "_")
+            # Normalize user input to find matches in secrets.toml keys
+            # (e.g., "Managing Director" or "md" -> "managing_director")
+            formatted_user = username_input.strip().lower().replace(" ", "_")
             
-            # Verify credentials against Streamlit's secrets manager
-            if secret_key in st.secrets and password_input == st.secrets[secret_key]:
+            # Map simplified inputs to display roles cleanly
+            role_mapping = {
+                "managing_director": "Managing Director",
+                "md": "Managing Director",
+                "hr_admin": "HR/Admin",
+                "hr": "HR/Admin",
+                "admin": "HR/Admin",
+                "ciso": "CISO",
+                "general_user": "General User",
+                "general": "General User"
+            }
+            
+            # Determine mapped key format
+            matched_key = None
+            for shortcut, full_role in role_mapping.items():
+                if formatted_user == shortcut:
+                    matched_key = shortcut if "_" in shortcut or shortcut in ["ciso", "admin", "hr", "md"] else None
+                    # Normalize back to the target secret keys in secrets.toml
+                    if shortcut == "md": matched_key = "managing_director"
+                    if shortcut in ["hr", "admin"]: matched_key = "hr_admin"
+                    if shortcut == "general": matched_key = "general_user"
+                    break
+            
+            # If no shortcut match found, use the direct raw formatted input
+            if not matched_key:
+                matched_key = formatted_user
+
+            # Check if key exists in secrets framework and match values securely
+            if matched_key in st.secrets and password_input == st.secrets[matched_key]:
                 st.session_state.authenticated = True
-                st.session_state.user_role = role_input
+                st.session_state.user_role = role_mapping.get(matched_key, username_input)
                 st.rerun()
             else:
-                st.error("Invalid password. Please check your credentials and try again.")
+                st.error("Invalid username or password. Please try again.")
     st.stop()
 
 # Logout Option in Main View
@@ -188,4 +215,3 @@ with right_col:
     </div>
     """, unsafe_allow_html=True)
     st.link_button("Open Admin Panel", links["Admin Panel"])
-            
