@@ -99,10 +99,6 @@ st.markdown('<div class="sub-title">Smart HR Operations & Employee Analytics Pla
 # =========================================
 # SECURE LOGIN SYSTEM (USERNAME & PASSWORD)
 # =========================================
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-    st.session_state.user_role = None
-
 if not st.session_state.authenticated:
     login_col1, login_col2, login_col3 = st.columns([1, 1.5, 1])
     
@@ -111,7 +107,15 @@ if not st.session_state.authenticated:
         
         # Text fields for explicit input
         username_input = st.text_input("Username")
-        password_input = st.password_input("Password", type="password")
+        password_input = st.text_input("Password", type="password")  # Fixed function here
+        
+        if st.button("Login", use_container_width=True):
+
+        
+        # Text fields for explicit input
+        username_input = st.text_input("Username")
+        password_input = st.text_input("Password", type="password")
+        
         
         if st.button("Login", use_container_width=True):
             # Normalize user input to find matches in secrets.toml keys
