@@ -1,6 +1,5 @@
 import streamlit as st
 
-
 # =========================================
 # PAGE CONFIG
 # =========================================
@@ -12,63 +11,20 @@ st.set_page_config(
 )
 
 # =========================================
-# LOGIN SYSTEM
-# =========================================
-
-def login():
-
-    st.markdown("<h2 style='text-align:center;'>Login</h2>", unsafe_allow_html=True)
-
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    login_btn = st.button("Login", use_container_width=True)
-
-    if login_btn:
-
-        users = {
-            st.secrets["users"]["md_username"]:
-                st.secrets["users"]["md_password"],
-
-            st.secrets["users"]["hr_username"]:
-                st.secrets["users"]["hr_password"],
-
-            st.secrets["users"]["pa_username"]:
-                st.secrets["users"]["pa_password"]
-        }
-
-        if username in users and users[username] == password:
-            st.session_state.logged_in = True
-            st.session_state.user = username
-            st.rerun()
-        else:
-            st.error("Invalid username or password")
-
-# Session State
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-# Show Login First
-if not st.session_state.logged_in:
-    login()
-    st.stop()
-
-# =========================================
 # CUSTOM CSS
 # =========================================
 st.markdown("""
 <style>
-
     .stApp {
         background-color: white;
     }
 
     /* HEADER */
     .main-title {
-        font-size: 48px;
+        font-size: 42px;
         font-weight: 800;
         text-align: center;
-        color: #00000;
+        color: #000000;
         margin-top: 10px;
         margin-bottom: 5px;
     }
@@ -77,7 +33,7 @@ st.markdown("""
         text-align: center;
         color: #6b7280;
         font-size: 18px;
-        margin-bottom: 40px;
+        margin-bottom: 35px;
     }
 
     /* CARD DESIGN */
@@ -87,7 +43,7 @@ st.markdown("""
         border-radius: 18px;
         border-left: 6px solid #ff6b00;
         box-shadow: 0px 4px 15px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
+        margin-bottom: 15px;
         border: 1px solid #f3f4f6;
         transition: 0.3s;
     }
@@ -98,7 +54,7 @@ st.markdown("""
     }
 
     .card h3 {
-        color: #00000;
+        color: #000000;
         margin-bottom: 10px;
     }
 
@@ -120,143 +76,116 @@ st.markdown("""
         width: 100% !important;
         display: block !important;
         text-decoration: none !important;
-        opacity: 1 !important;
-        visibility: visible !important;
+        margin-bottom: 30px !important;
     }
 
     /* REMOVE EXTRA TOP SPACE */
     .block-container {
         padding-top: 1.5rem;
     }
-
 </style>
 """, unsafe_allow_html=True)
 
 # =========================================
-# LOGO
+# LOGO & HEADER
 # =========================================
 col1, col2, col3 = st.columns([1,2,1])
-
 with col2:
     st.image("logo.png", width=400)
 
-# =========================================
-# LOGOUT BUTTON
-# =========================================
-col_a, col_b = st.columns([8,1])
+st.markdown('<div class="main-title">HR/ADMIN MANAGEMENT SYSTEM</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">Smart HR Operations & Employee Analytics Platform</div>', unsafe_allow_html=True)
 
-with col_b:
-    if st.button("Logout"):
-        st.session_state.logged_in = False
+# =========================================
+# SECURE LOGIN SYSTEM
+# =========================================
+# Accessing hidden credentials securely from secrets
+VALID_ROLES = ["Managing Director", "HR/Admin", "CISO", "General User"]
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+    st.session_state.user_role = None
+
+if not st.session_state.authenticated:
+    login_col1, login_col2, login_col3 = st.columns([1, 1.5, 1])
+    
+    with login_col2:
+        st.subheader("🔑 System Login")
+        role_input = st.selectbox("Select Your Role", VALID_ROLES)
+        password_input = st.password_input("Enter Password", type="password")
+        
+        if st.button("Login", use_container_width=True):
+            # Formulate the secret key based on selection to match secrets.toml format
+            secret_key = role_input.lower().replace(" ", "_")
+            
+            # Verify credentials against Streamlit's secrets manager
+            if secret_key in st.secrets and password_input == st.secrets[secret_key]:
+                st.session_state.authenticated = True
+                st.session_state.user_role = role_input
+                st.rerun()
+            else:
+                st.error("Invalid password. Please check your credentials and try again.")
+    st.stop()
+
+# Logout Option in Main View
+out_col1, out_col2 = st.columns([5, 1])
+with out_col2:
+    if st.button("Log Out", use_container_width=True):
+        st.session_state.authenticated = False
+        st.session_state.user_role = None
         st.rerun()
 
-# =========================================
-# HEADER
-# =========================================
-st.markdown(
-    '<div class="main-title">HR/ADMIN MANAGEMENT SYSTEM</div>',
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    '<div class="sub-title">Smart HR Operations & Employee Analytics Platform</div>',
-    unsafe_allow_html=True
-)
+st.info(f"Logged in as: **{st.session_state.user_role}**")
+st.markdown("---")
 
 # =========================================
-# LINKS
+# APP LINKS & HUB PLATFORM
 # =========================================
 links = {
     "Attendance": "https://staff-attendance.streamlit.app/",
-    "Weekly Report": "https://weeklyreportss.streamlit.app/",
-    "Employee Performance": "https://link/",
-    "Appraisal": "https://link/",
-    "KPI": "https://link/"
+    "Business Department Appraisal": "https://business-department.streamlit.app/",
+    "Staff Performance Appraisal": "https://staff-performance.streamlit.app/",
+    "Admin Panel": "https://management-panel.streamlit.app/"
 }
 
-# =========================================
-# HOME PAGE
-# =========================================
-col1, col2 = st.columns(2)
+# Grid Layout Display
+left_col, right_col = st.columns(2)
 
-with col1:
-
+with left_col:
+    # Section 1: Attendance
     st.markdown("""
     <div class="card">
         <h3>📅 Attendance Management</h3>
-        <p>
-            Track employee attendance records, punctuality,
-            daily check-ins and workforce presence.
-        </p>
+        <p>Track employee attendance records, punctuality, daily check-ins, and workforce presence.</p>
     </div>
     """, unsafe_allow_html=True)
+    st.link_button("Open Attendance System", links["Attendance"])
 
-    st.link_button(
-        "Open Attendance System",
-        links["Attendance"]
-    )
-
+    # Section 2: Staff Performance
     st.markdown("""
     <div class="card">
-        <h3>📅 Weekly Report</h3>
-        <p>
-            Tracks employee weekly activities rates the highest and lowest performers.
-        </p>
+        <h3>📝 Staff Performance Appraisal</h3>
+        <p>Analyze employee productivity, conduct staff appraisals, reviews, and assessment processes efficiently.</p>
     </div>
     """, unsafe_allow_html=True)
+    st.link_button("Open Staff Performance Appraisal", links["Staff Performance Appraisal"])
 
-    st.link_button(
-        "Open Weekly Report",
-        links["Weekly Report"]
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
+with right_col:
+    # Section 3: Business Department
     st.markdown("""
     <div class="card">
-        <h3>📝 Employee Appraisal</h3>
-        <p>
-            Conduct employee appraisals, staff evaluations,
-            reviews and assessment processes efficiently.
-        </p>
+        <h3>💼 Business Department Appraisal</h3>
+        <p>Tracks business department productivity, targets, efficiency, and overall departmental performance.</p>
     </div>
     """, unsafe_allow_html=True)
+    st.link_button("Open Business Department Appraisal", links["Business Department Appraisal"])
 
-    st.link_button(
-        "Open Appraisal System",
-        links["Appraisal"]
-    )
-
-with col2:
-
+    # Section 4: Admin Panel
     st.markdown("""
     <div class="card">
-        <h3>📈 Employee Performance</h3>
-        <p>
-            Analyze employee productivity, targets,
-            work efficiency and overall performance.
-        </p>
+        <h3>🛠️ Admin Panel</h3>
+        <p>Manage high-level administrative tasks, operational setups, and office activities.</p>
     </div>
     """, unsafe_allow_html=True)
-
-    st.link_button(
-        "Open Performance System",
-        links["Employee Performance"]
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="card">
-        <h3>📊 KPI Dashboard</h3>
-        <p>
-            Monitor HR KPIs, employee metrics,
-            business growth and workforce insights.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.link_button(
-        "Open KPI Dashboard",
-        links["KPI"]
-    )
+    st.link_button("Open Admin Panel", links["Admin Panel"])
+            
