@@ -99,6 +99,10 @@ st.markdown('<div class="sub-title">Smart HR Operations & Employee Analytics Pla
 # =========================================
 # SECURE LOGIN SYSTEM (USERNAME & PASSWORD)
 # =========================================
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+    st.session_state.user_role = None
+
 if not st.session_state.authenticated:
     login_col1, login_col2, login_col3 = st.columns([1, 1.5, 1])
     
@@ -107,19 +111,10 @@ if not st.session_state.authenticated:
         
         # Text fields for explicit input
         username_input = st.text_input("Username")
-        password_input = st.text_input("Password", type="password")  # Fixed function here
-        
-        if st.button("Login", use_container_width=True):
-
-        
-        # Text fields for explicit input
-    username_input = st.text_input("Username")
-    password_input = st.text_input("Password", type="password")
-        
+        password_input = st.text_input("Password", type="password")
         
         if st.button("Login", use_container_width=True):
             # Normalize user input to find matches in secrets.toml keys
-            # (e.g., "Managing Director" or "md" -> "managing_director")
             formatted_user = username_input.strip().lower().replace(" ", "_")
             
             # Map simplified inputs to display roles cleanly
@@ -138,18 +133,16 @@ if not st.session_state.authenticated:
             matched_key = None
             for shortcut, full_role in role_mapping.items():
                 if formatted_user == shortcut:
-                    matched_key = shortcut if "_" in shortcut or shortcut in ["ciso", "admin", "hr", "md"] else None
-                    # Normalize back to the target secret keys in secrets.toml
+                    matched_key = shortcut
                     if shortcut == "md": matched_key = "managing_director"
                     if shortcut in ["hr", "admin"]: matched_key = "hr_admin"
                     if shortcut == "general": matched_key = "general_user"
                     break
             
-            # If no shortcut match found, use the direct raw formatted input
             if not matched_key:
                 matched_key = formatted_user
 
-            # Check if key exists in secrets framework and match values securely
+            # Check credentials against st.secrets securely
             if matched_key in st.secrets and password_input == st.secrets[matched_key]:
                 st.session_state.authenticated = True
                 st.session_state.user_role = role_mapping.get(matched_key, username_input)
@@ -219,3 +212,4 @@ with right_col:
     </div>
     """, unsafe_allow_html=True)
     st.link_button("Open Admin Panel", links["Admin Panel"])
+    
